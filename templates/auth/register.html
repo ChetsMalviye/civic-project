@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register | Civic System</title>
+    <style>
+        /* Reset */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+        }
+
+        /* ---- LEFT SIDE (blue panel) ---- */
+        .left {
+            width: 50%;
+            background: #1a73e8;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            color: white;
+        }
+
+        .left .icon {
+            font-size: 70px;
+            margin-bottom: 20px;
+        }
+
+        .left h1 {
+            font-size: 26px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .left p {
+            font-size: 14px;
+            text-align: center;
+            opacity: 0.85;
+            line-height: 1.7;
+            max-width: 280px;
+        }
+
+        /* small info boxes on left */
+        .info-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 8px;
+            padding: 10px 16px;
+            margin-top: 16px;
+            width: 100%;
+            max-width: 300px;
+            font-size: 13px;
+        }
+
+        .info-box span { font-size: 20px; }
+
+        /* ---- RIGHT SIDE (form) ---- */
+        .right {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 50px 60px;
+            background: #ffffff;
+        }
+
+        .right h2 {
+            font-size: 24px;
+            color: #1a73e8;
+            margin-bottom: 6px;
+        }
+
+        .right .sub {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 28px;
+        }
+
+        /* Input group */
+        .input-group {
+            width: 100%;
+            margin-bottom: 16px;
+        }
+
+        .input-group label {
+            font-size: 13px;
+            color: #444;
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        .input-group input:focus {
+            border-color: #1a73e8;
+        }
+
+        /* Register button */
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+            margin-top: 6px;
+            transition: background 0.2s;
+        }
+
+        .btn:hover { background: #1558c0; }
+
+        .login-link {
+            margin-top: 18px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .login-link a {
+            color: #1a73e8;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        /* Flash messages */
+        .msg-success {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-bottom: 14px;
+            font-size: 13px;
+            width: 100%;
+        }
+
+        .msg-danger {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-bottom: 14px;
+            font-size: 13px;
+            width: 100%;
+        }
+
+        /* divider line */
+        .divider {
+            width: 100%;
+            border: none;
+            border-top: 1px solid #eee;
+            margin: 16px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LEFT SIDE -->
+    <div class="left">
+        <div class="icon">🏛️</div>
+        <h1>Smart Civic Issue Reporting</h1>
+        <p>Report road damage, water leaks, garbage issues and more — all in one place!</p>
+
+        <div class="info-box">
+            <span></span> Report issues in your area
+        </div>
+        <div class="info-box">
+            <span></span> AI sorts your complaint
+        </div>
+        <div class="info-box">
+            <span></span> Track complaint status live
+        </div>
+    </div>
+
+    <!-- RIGHT SIDE -->
+    <div class="right">
+        <h2>Create Account</h2>
+        <p class="sub">Join us to report civic issues in your area</p>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="msg-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <!-- Register Form -->
+        <form method="POST" style="width:100%;">
+
+            <div class="input-group">
+                <label>👤 Full Name</label>
+                <input type="text" name="name" placeholder="Enter your full name" required>
+            </div>
+
+            <div class="input-group">
+                <label>📧 Email Address</label>
+                <input type="email" name="email" placeholder="Enter your email" required>
+            </div>
+
+            <div class="input-group">
+                <label>🔒 Password</label>
+                <input type="password" name="password" placeholder="Create a password" required>
+            </div>
+
+            <button type="submit" class="btn">Register Now</button>
+        </form>
+
+        <hr class="divider">
+        <p class="login-link">Already have an account? <a href="/login">Login here</a></p>
+    </div>
+
+</body>
+</html>

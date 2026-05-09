@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Report Complaint | Civic System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f4f8;
+            min-height: 100vh;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: #1a73e8;
+            color: white;
+            padding: 14px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar .logo { font-size: 16px; font-weight: bold; }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            font-size: 13px;
+            margin-left: 20px;
+            opacity: 0.9;
+        }
+
+        .navbar a:hover { opacity: 1; }
+
+        /* Page content */
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .page-title {
+            font-size: 22px;
+            color: #1a73e8;
+            margin-bottom: 6px;
+        }
+
+        .page-sub {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 24px;
+        }
+
+        /* Form card */
+        .form-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .input-group {
+            margin-bottom: 18px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: bold;
+            color: #444;
+            margin-bottom: 6px;
+        }
+
+        .input-group input,
+        .input-group select,
+        .input-group textarea {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: Arial, sans-serif;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus,
+        .input-group textarea:focus {
+            border-color: #1a73e8;
+        }
+
+        .input-group textarea {
+            height: 110px;
+            resize: vertical;
+        }
+
+        /* Category grid */
+        .category-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 6px;
+        }
+
+        .category-item {
+            border: 1.5px solid #ddd;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .category-item:hover {
+            border-color: #1a73e8;
+            background: #f0f6ff;
+        }
+
+        .category-item input[type="radio"] { display: none; }
+
+        .category-item.selected {
+            border-color: #1a73e8;
+            background: #e8f0fe;
+            color: #1a73e8;
+            font-weight: bold;
+        }
+
+        .category-item .cat-icon { font-size: 24px; display: block; margin-bottom: 4px; }
+
+        /* Submit button */
+        .btn {
+            width: 100%;
+            padding: 13px;
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+            margin-top: 6px;
+            transition: background 0.2s;
+        }
+
+        .btn:hover { background: #1558c0; }
+
+        /* Flash messages */
+        .msg-success {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+
+        .msg-danger {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+
+        /* AI note */
+        .ai-note {
+            background: #e8f0fe;
+            border-left: 4px solid #1a73e8;
+            padding: 10px 14px;
+            border-radius: 0 8px 8px 0;
+            font-size: 13px;
+            color: #1a73e8;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <div class="navbar">
+        <div class="logo">🏛️ Civic Issue Reporting</div>
+        <div>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/my-complaints">My Complaints</a>
+            <a href="/logout">Logout</a>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="container">
+        <div class="page-title">📝 Report a New Issue</div>
+        <div class="page-sub">Fill in the details below and our AI will assign the priority automatically</div>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="msg-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <div class="form-card">
+
+            <div class="ai-note">
+                🤖 AI will automatically assign <strong>High / Medium / Low</strong> priority based on your description!
+            </div>
+
+            <form method="POST">
+
+                <!-- Title -->
+                <div class="input-group">
+                    <label>📌 Issue Title</label>
+                    <input type="text" name="title"
+                           placeholder="e.g. Road damaged near school" required>
+                </div>
+
+                <!-- Category -->
+                <div class="input-group">
+                    <label>🗂️ Select Category</label>
+                    <div class="category-grid">
+                        <label class="category-item" id="cat-road">
+                            <input type="radio" name="category" value="Road Damage" required>
+                            <span class="cat-icon">🚧</span> Road Damage
+                        </label>
+                        <label class="category-item" id="cat-water">
+                            <input type="radio" name="category" value="Water Leak">
+                            <span class="cat-icon">💧</span> Water Leak
+                        </label>
+                        <label class="category-item" id="cat-garbage">
+                            <input type="radio" name="category" value="Garbage">
+                            <span class="cat-icon">🗑️</span> Garbage Issue
+                        </label>
+                        <label class="category-item" id="cat-light">
+                            <input type="radio" name="category" value="Streetlight">
+                            <span class="cat-icon">💡</span> Streetlight
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Location -->
+                <div class="input-group">
+                    <label>📍 Location</label>
+                    <input type="text" name="location"
+                           placeholder="e.g. Near Gandhi Chowk, Jaipur" required>
+                </div>
+
+                <!-- Description -->
+                <div class="input-group">
+                    <label>📄 Description</label>
+                    <textarea name="description"
+                              placeholder="Describe the issue clearly... (use words like 'dangerous', 'urgent', 'accident' for High priority)"
+                              required></textarea>
+                </div>
+
+                <button type="submit" class="btn">🚀 Submit Complaint</button>
+
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Highlight selected category
+        document.querySelectorAll('.category-item').forEach(function(item) {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.category-item').forEach(function(i) {
+                    i.classList.remove('selected');
+                });
+                this.classList.add('selected');
+            });
+        });
+    </script>
+
+</body>
+</html>

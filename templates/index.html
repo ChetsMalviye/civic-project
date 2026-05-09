@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Civic Issue Reporting System</title>
+    <style>
+        /* Basic reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+            background: #fff;
+        }
+
+        /* Navigation bar */
+        .navbar {
+            background-color: #1a73e8;
+            padding: 14px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar .logo {
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 14px;
+        }
+
+        .navbar a:hover {
+            text-decoration: underline;
+        }
+
+        /* Hero / top section */
+        .hero {
+            background-color: #1a73e8;
+            color: white;
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .hero h1 {
+            font-size: 36px;
+            margin-bottom: 14px;
+        }
+
+        .hero p {
+            font-size: 16px;
+            margin-bottom: 30px;
+            color: #d0e4ff;
+        }
+
+        .hero a {
+            display: inline-block;
+            margin: 6px;
+            padding: 12px 28px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 15px;
+        }
+
+        .btn-white {
+            background: white;
+            color: #1a73e8;
+            font-weight: bold;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+
+        /* How it works section */
+        .section {
+            padding: 60px 40px;
+            text-align: center;
+        }
+
+        .section h2 {
+            font-size: 26px;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .section p.sub {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 36px;
+        }
+
+        .section.grey {
+            background-color: #f5f5f5;
+        }
+
+        /* Steps row */
+        .steps {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .step {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 24px 20px;
+            width: 180px;
+            text-align: center;
+        }
+
+        .step .num {
+            background: #1a73e8;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 15px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px auto;
+        }
+
+        .step h3 {
+            font-size: 14px;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .step p {
+            font-size: 12px;
+            color: #888;
+            line-height: 1.6;
+        }
+
+        /* Features */
+        .features {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .feature {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 22px;
+            width: 240px;
+            text-align: left;
+            border-top: 4px solid #1a73e8;
+        }
+
+        .feature h3 {
+            font-size: 15px;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .feature p {
+            font-size: 13px;
+            color: #777;
+            line-height: 1.6;
+        }
+
+        /* Categories */
+        .categories {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .category {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px 30px;
+            text-align: center;
+            width: 160px;
+        }
+
+        .category h3 {
+            font-size: 14px;
+            color: #2c3e50;
+            margin-bottom: 6px;
+        }
+
+        .category p {
+            font-size: 12px;
+            color: #888;
+        }
+
+        /* Bottom CTA */
+        .cta {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .cta h2 {
+            font-size: 26px;
+            margin-bottom: 12px;
+        }
+
+        .cta p {
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 24px;
+        }
+
+        .cta a {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #1a73e8;
+            color: white;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 15px;
+        }
+
+        .cta a:hover {
+            background: #1558c0;
+        }
+
+        /* Footer */
+        .footer {
+            background: #1a1a1a;
+            color: #aaa;
+            text-align: center;
+            padding: 18px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <div class="navbar">
+        <div class="logo">Civic Issue Reporting System</div>
+        <div>
+            <a href="#how">How it Works</a>
+            <a href="#features">Features</a>
+            <a href="/login">Login</a>
+            <a href="/register">Register</a>
+        </div>
+    </div>
+
+    <!-- Hero -->
+    <div class="hero">
+        <h1>Smart Civic Issue Reporting System</h1>
+        <p>Report road damage, water leaks, garbage issues and more.<br>
+           Our AI automatically assigns the priority of your complaint.</p>
+        <a href="/register" class="btn-white">Get Started</a>
+        <a href="/login" class="btn-outline">Login</a>
+    </div>
+
+    <!-- How it works -->
+    <div class="section grey" id="how">
+        <h2>How It Works</h2>
+        <p class="sub">Report a civic issue in just 4 simple steps</p>
+
+        <div class="steps">
+            <div class="step">
+                <div class="num">1</div>
+                <h3>Register</h3>
+                <p>Create a free account on our website</p>
+            </div>
+            <div class="step">
+                <div class="num">2</div>
+                <h3>Report Issue</h3>
+                <p>Fill the complaint form with location and description</p>
+            </div>
+            <div class="step">
+                <div class="num">3</div>
+                <h3>AI Priority</h3>
+                <p>AI automatically assigns High, Medium or Low priority</p>
+            </div>
+            <div class="step">
+                <div class="num">4</div>
+                <h3>Track Status</h3>
+                <p>Admin updates status and you can track it anytime</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features -->
+    <div class="section" id="features">
+        <h2>Features</h2>
+        <p class="sub">Why use this system?</p>
+
+        <div class="features">
+            <div class="feature">
+                <h3>AI Priority Detection</h3>
+                <p>The system reads your complaint and automatically
+                   assigns High, Medium or Low priority using AI.</p>
+            </div>
+            <div class="feature">
+                <h3>Live Status Tracking</h3>
+                <p>Track your complaint status in real time —
+                   Pending, In Progress or Resolved.</p>
+            </div>
+            <div class="feature">
+                <h3>Admin Dashboard</h3>
+                <p>A separate admin panel to manage and
+                   update all complaints easily.</p>
+            </div>
+            <div class="feature">
+                <h3>Simple and Easy</h3>
+                <p>Anyone can use this system without
+                   any technical knowledge.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Categories -->
+    <div class="section grey" id="categories">
+        <h2>What Can You Report?</h2>
+        <p class="sub">We cover all major civic issues in your area</p>
+
+        <div class="categories">
+            <div class="category">
+                <h3>Road Damage</h3>
+                <p>Potholes, cracks, broken roads</p>
+            </div>
+            <div class="category">
+                <h3>Water Leak</h3>
+                <p>Pipeline leaks, water wastage</p>
+            </div>
+            <div class="category">
+                <h3>Garbage Issue</h3>
+                <p>Uncollected waste, dirty areas</p>
+            </div>
+            <div class="category">
+                <h3>Streetlight</h3>
+                <p>Broken or missing streetlights</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta">
+        <h2>Ready to Report an Issue?</h2>
+        <p>Register for free and help make your city a better place.</p>
+        <a href="/register">Register Now</a>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        Civic Issue Reporting System — Made by Chetan Lohar | BCA Final Year Project 2026
+    </div>
+
+</body>
+</html>

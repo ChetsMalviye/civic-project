@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Complaints | Civic System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f4f8;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: #1a73e8;
+            color: white;
+            padding: 14px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar .logo { font-size: 16px; font-weight: bold; }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            font-size: 13px;
+            margin-left: 20px;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .page-title {
+            font-size: 22px;
+            color: #1a73e8;
+            margin-bottom: 6px;
+        }
+
+        .page-sub {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 24px;
+        }
+
+        /* Complaint card */
+        .complaint-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            border-left: 5px solid #1a73e8;
+        }
+
+        .complaint-card.high  { border-left-color: #e53935; }
+        .complaint-card.medium { border-left-color: #fb8c00; }
+        .complaint-card.low   { border-left-color: #43a047; }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .badge-high     { background: #fde8e8; color: #c62828; }
+        .badge-medium   { background: #fff3e0; color: #e65100; }
+        .badge-low      { background: #e8f5e9; color: #2e7d32; }
+        .badge-pending  { background: #e3f2fd; color: #1565c0; }
+        .badge-progress { background: #fff8e1; color: #f57f17; }
+        .badge-resolved { background: #e8f5e9; color: #2e7d32; }
+
+        .card-info {
+            font-size: 13px;
+            color: #666;
+            margin-top: 6px;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .card-desc {
+            font-size: 13px;
+            color: #555;
+            margin-top: 8px;
+            line-height: 1.6;
+        }
+
+        /* Empty state */
+        .empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: #aaa;
+        }
+
+        .empty .icon { font-size: 50px; margin-bottom: 12px; }
+
+        .btn-new {
+            display: inline-block;
+            margin-top: 16px;
+            padding: 11px 24px;
+            background: #1a73e8;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <div class="logo">🏛️ Civic Issue Reporting</div>
+        <div>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/complaint">Report Issue</a>
+            <a href="/logout">Logout</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="page-title">📋 My Complaints</div>
+        <div class="page-sub">Track all your submitted complaints here</div>
+
+        {% if complaints %}
+            {% for c in complaints %}
+            <div class="complaint-card {{ c[6]|lower }}">
+                <div class="card-top">
+                    <div class="card-title">{{ c[2] }}</div>
+                    <div>
+                        <span class="badge badge-{{ c[6]|lower }}">{{ c[6] }} Priority</span>
+                        <span class="badge badge-{{ c[7]|lower }}" style="margin-left:6px;">{{ c[7] }}</span>
+                    </div>
+                </div>
+                <div class="card-info">
+                    <span>🗂️ {{ c[4] }}</span>
+                    <span>📍 {{ c[5] }}</span>
+                    <span>🕐 {{ c[8] }}</span>
+                </div>
+                <div class="card-desc">{{ c[3] }}</div>
+            </div>
+            {% endfor %}
+
+        {% else %}
+            <div class="empty">
+                <div class="icon">📭</div>
+                <div>You have not submitted any complaints yet.</div>
+                <a href="/complaint" class="btn-new">+ Report New Issue</a>
+            </div>
+        {% endif %}
+
+    </div>
+
+</body>
+</html>
