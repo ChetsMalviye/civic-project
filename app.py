@@ -16,7 +16,7 @@ app.secret_key = "chetan123"
 # -----------------------------------------------
 # Database connection — Supabase PostgreSQL
 # -----------------------------------------------
-DB_URL = "postgresql://postgres:Supabase%40%2604@db.dbisiduqulcmvirjdxhr.supabase.co:5432/postgres"
+DB_URL = "postgresql://postgres.dbisiduqulcmvirjdxhr:Supabase%26%4004@aws-1-ap-south-1.pooler.supabase.com:5432/postgres"
 
 def get_db():
     conn = psycopg2.connect(DB_URL)
