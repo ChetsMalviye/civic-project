@@ -164,8 +164,7 @@ def my_complaints():
 @app.route('/logout')
 def logout():
     session.clear()
-    flash('Logged out!', 'success')
-    return redirect(url_for('login'))
+    return redirect(url_for('home'))
 
 # -----------------------------------------------
 # Admin Login
@@ -267,7 +266,7 @@ def update_status(complaint_id):
 def admin_logout():
     session.pop('admin_id', None)
     session.pop('admin_name', None)
-    return redirect(url_for('admin_login'))
+    return redirect(url_for('home'))
 
 # -----------------------------------------------
 # Run the app
