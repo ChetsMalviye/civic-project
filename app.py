@@ -4,74 +4,23 @@
 # Made by: Chetan Lohar | BCA 6th Semester
 
 import os
+import psycopg2
+import psycopg2.extras
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
-import sqlite3
 
 # Create the Flask app
 app = Flask(__name__)
 app.secret_key = "chetan123"
 
 # -----------------------------------------------
-# DATABASE SETUP — SQLite (works everywhere!)
+# Database connection — Supabase PostgreSQL
 # -----------------------------------------------
-DB_PATH = "civic.db"
+DB_URL = "postgresql://postgres:Supabase%40%2604@db.dbisiduqulcmvirjdxhr.supabase.co:5432/postgres"
 
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = psycopg2.connect(DB_URL)
     return conn
-
-def init_db():
-    conn = get_db()
-    cursor = conn.cursor()
-
-    # Create users table
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id       INTEGER PRIMARY KEY AUTOINCREMENT,
-            name     TEXT NOT NULL,
-            email    TEXT NOT NULL UNIQUE,
-            password TEXT NOT NULL,
-            role     TEXT DEFAULT 'user',
-            created  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-
-    # Create complaints table
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS complaints (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id     INTEGER NOT NULL,
-            title       TEXT NOT NULL,
-            description TEXT NOT NULL,
-            category    TEXT NOT NULL,
-            location    TEXT NOT NULL,
-            priority    TEXT DEFAULT 'Medium',
-            status      TEXT DEFAULT 'Pending',
-            created     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-
-    # Create admins table
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS admins (
-            id       INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL,
-            password TEXT NOT NULL
-        )
-    """)
-
-    # Add default admin if not exists
-    cursor.execute("SELECT * FROM admins WHERE username='admin'")
-    if not cursor.fetchone():
-        cursor.execute(
-            "INSERT INTO admins (username, password) VALUES (?, ?)",
-            ('admin', 'admin123')
-        )
-
-    conn.commit()
-    conn.close()
 
 # -----------------------------------------------
 # Home page
@@ -94,18 +43,19 @@ def register():
         hashed_password = generate_password_hash(password)
 
         try:
-            conn = get_db()
-            conn.execute(
-                "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
+            conn   = get_db()
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO users (name, email, password) VALUES (%s, %s, %s)",
                 (name, email, hashed_password)
             )
             conn.commit()
+            cursor.close()
             conn.close()
             flash('Registration successful! Please login.', 'success')
             return redirect(url_for('login'))
-        except:
-            flash('Email already exists! Try another email.', 'danger')
-            conn.close()
+        except Exception as e:
+            flash('Email already exists! Try another.', 'danger')
 
     return render_template('auth/register.html')
 
@@ -118,10 +68,11 @@ def login():
         email    = request.form['email']
         password = request.form['password']
 
-        conn = get_db()
-        user = conn.execute(
-            "SELECT * FROM users WHERE email=?", (email,)
-        ).fetchone()
+        conn   = get_db()
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
+        user = cursor.fetchone()
+        cursor.close()
         conn.close()
 
         if user and check_password_hash(user['password'], password):
@@ -168,15 +119,17 @@ def complaint():
                 priority = 'High'
                 break
 
-        conn = get_db()
-        conn.execute(
+        conn   = get_db()
+        cursor = conn.cursor()
+        cursor.execute(
             """INSERT INTO complaints
                (user_id, title, description, category, location, priority, status)
-               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+               VALUES (%s, %s, %s, %s, %s, %s, %s)""",
             (session['user_id'], title, description,
              category, location, priority, 'Pending')
         )
         conn.commit()
+        cursor.close()
         conn.close()
 
         flash('Complaint submitted! Priority: ' + priority, 'success')
@@ -193,11 +146,14 @@ def my_complaints():
         flash('Please login first!', 'danger')
         return redirect(url_for('login'))
 
-    conn = get_db()
-    complaints = conn.execute(
-        "SELECT * FROM complaints WHERE user_id=? ORDER BY created DESC",
+    conn   = get_db()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cursor.execute(
+        "SELECT * FROM complaints WHERE user_id=%s ORDER BY created DESC",
         (session['user_id'],)
-    ).fetchall()
+    )
+    complaints = cursor.fetchall()
+    cursor.close()
     conn.close()
 
     return render_template('user/my_complaints.html', complaints=complaints)
@@ -208,7 +164,7 @@ def my_complaints():
 @app.route('/logout')
 def logout():
     session.clear()
-    flash('Logged out successfully!', 'success')
+    flash('Logged out!', 'success')
     return redirect(url_for('login'))
 
 # -----------------------------------------------
@@ -220,11 +176,14 @@ def admin_login():
         username = request.form['username']
         password = request.form['password']
 
-        conn = get_db()
-        admin = conn.execute(
-            "SELECT * FROM admins WHERE username=? AND password=?",
+        conn   = get_db()
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor.execute(
+            "SELECT * FROM admins WHERE username=%s AND password=%s",
             (username, password)
-        ).fetchone()
+        )
+        admin = cursor.fetchone()
+        cursor.close()
         conn.close()
 
         if admin:
@@ -246,19 +205,30 @@ def admin_dashboard():
         flash('Please login as admin!', 'danger')
         return redirect(url_for('admin_login'))
 
-    conn = get_db()
+    conn   = get_db()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-    complaints = conn.execute("""
+    cursor.execute("""
         SELECT complaints.*, users.name as user_name
         FROM complaints
         JOIN users ON complaints.user_id = users.id
         ORDER BY complaints.created DESC
-    """).fetchall()
+    """)
+    complaints = cursor.fetchall()
 
-    total      = conn.execute("SELECT COUNT(*) FROM complaints").fetchone()[0]
-    pending    = conn.execute("SELECT COUNT(*) FROM complaints WHERE status='Pending'").fetchone()[0]
-    inprogress = conn.execute("SELECT COUNT(*) FROM complaints WHERE status='In Progress'").fetchone()[0]
-    resolved   = conn.execute("SELECT COUNT(*) FROM complaints WHERE status='Resolved'").fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM complaints")
+    total = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM complaints WHERE status='Pending'")
+    pending = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM complaints WHERE status='In Progress'")
+    inprogress = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM complaints WHERE status='Resolved'")
+    resolved = cursor.fetchone()[0]
+
+    cursor.close()
     conn.close()
 
     return render_template('admin/admin_dashboard.html',
@@ -277,12 +247,14 @@ def update_status(complaint_id):
         return redirect(url_for('admin_login'))
 
     new_status = request.form['status']
-    conn = get_db()
-    conn.execute(
-        "UPDATE complaints SET status=? WHERE id=?",
+    conn   = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE complaints SET status=%s WHERE id=%s",
         (new_status, complaint_id)
     )
     conn.commit()
+    cursor.close()
     conn.close()
 
     flash('Status updated!', 'success')
@@ -301,9 +273,4 @@ def admin_logout():
 # Run the app
 # -----------------------------------------------
 if __name__ == '__main__':
-    init_db()
-    print("Database ready!")
     app.run(debug=True)
-
-# This runs on the server (Render/Railway)
-init_db()
