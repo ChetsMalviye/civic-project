@@ -3,24 +3,75 @@
 # Project: AI-Powered Smart Civic Issue Reporting System
 # Made by: Chetan Lohar | BCA 6th Semester
 
+import os
 from flask import Flask, render_template, request, redirect, url_for, session, flash
-from flask_mysqldb import MySQL
 from werkzeug.security import generate_password_hash, check_password_hash
+import sqlite3
 
 # Create the Flask app
 app = Flask(__name__)
-
-# Secret key for sessions
 app.secret_key = "chetan123"
 
-# --- MySQL Database Connection ---
-app.config['MYSQL_HOST']     = 'localhost'
-app.config['MYSQL_USER']     = 'root'
-app.config['MYSQL_PASSWORD'] = ''          # XAMPP default has no password
-app.config['MYSQL_DB']       = 'civic_db'
+# -----------------------------------------------
+# DATABASE SETUP — SQLite (works everywhere!)
+# -----------------------------------------------
+DB_PATH = "civic.db"
 
-# Connect MySQL to app
-mysql = MySQL(app)
+def get_db():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # Create users table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id       INTEGER PRIMARY KEY AUTOINCREMENT,
+            name     TEXT NOT NULL,
+            email    TEXT NOT NULL UNIQUE,
+            password TEXT NOT NULL,
+            role     TEXT DEFAULT 'user',
+            created  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # Create complaints table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS complaints (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id     INTEGER NOT NULL,
+            title       TEXT NOT NULL,
+            description TEXT NOT NULL,
+            category    TEXT NOT NULL,
+            location    TEXT NOT NULL,
+            priority    TEXT DEFAULT 'Medium',
+            status      TEXT DEFAULT 'Pending',
+            created     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # Create admins table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS admins (
+            id       INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            password TEXT NOT NULL
+        )
+    """)
+
+    # Add default admin if not exists
+    cursor.execute("SELECT * FROM admins WHERE username='admin'")
+    if not cursor.fetchone():
+        cursor.execute(
+            "INSERT INTO admins (username, password) VALUES (?, ?)",
+            ('admin', 'admin123')
+        )
+
+    conn.commit()
+    conn.close()
 
 # -----------------------------------------------
 # Home page
@@ -35,28 +86,27 @@ def home():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        # Get data from the form
         name     = request.form['name']
         email    = request.form['email']
         password = request.form['password']
 
- # Hash the password before saving — more secure!
+        # Hash the password
         hashed_password = generate_password_hash(password)
 
-        # Save to database
-        cursor = mysql.connection.cursor()
-        cursor.execute(
-            "INSERT INTO users (name, email, password) VALUES (%s, %s, %s)",
-            (name, email, hashed_password)
-        )
-        mysql.connection.commit()
-        cursor.close()
+        try:
+            conn = get_db()
+            conn.execute(
+                "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
+                (name, email, hashed_password)
+            )
+            conn.commit()
+            conn.close()
+            flash('Registration successful! Please login.', 'success')
+            return redirect(url_for('login'))
+        except:
+            flash('Email already exists! Try another email.', 'danger')
+            conn.close()
 
-        # Show success message and go to login
-        flash('Registration successful! Please login.', 'success')
-        return redirect(url_for('login'))
-
-    # Show the register page
     return render_template('auth/register.html')
 
 # -----------------------------------------------
@@ -68,20 +118,15 @@ def login():
         email    = request.form['email']
         password = request.form['password']
 
-# Check if email exists in database
-        cursor = mysql.connection.cursor()
-        cursor.execute(
-            "SELECT * FROM users WHERE email=%s",
-            (email,)
-        )
-        user = cursor.fetchone()
-        cursor.close()
+        conn = get_db()
+        user = conn.execute(
+            "SELECT * FROM users WHERE email=?", (email,)
+        ).fetchone()
+        conn.close()
 
-        # Now check if password matches the hashed password
-        if user and check_password_hash(user[3], password):
-            # Save user info in session (like a cookie)
-            session['user_id']   = user[0]
-            session['user_name'] = user[1]
+        if user and check_password_hash(user['password'], password):
+            session['user_id']   = user['id']
+            session['user_name'] = user['name']
             flash('Login successful!', 'success')
             return redirect(url_for('dashboard'))
         else:
@@ -90,15 +135,72 @@ def login():
     return render_template('auth/login.html')
 
 # -----------------------------------------------
-# Dashboard (after login)
+# Dashboard
 # -----------------------------------------------
 @app.route('/dashboard')
 def dashboard():
-    # Check if user is logged in
     if 'user_id' not in session:
         flash('Please login first!', 'danger')
         return redirect(url_for('login'))
     return render_template('user/dashboard.html')
+
+# -----------------------------------------------
+# Complaint Form
+# -----------------------------------------------
+@app.route('/complaint', methods=['GET', 'POST'])
+def complaint():
+    if 'user_id' not in session:
+        flash('Please login first!', 'danger')
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        title       = request.form['title']
+        description = request.form['description']
+        category    = request.form['category']
+        location    = request.form['location']
+
+        # AI priority logic
+        urgent_words = ['urgent', 'dangerous', 'accident', 'broken',
+                        'flood', 'fire', 'blocked', 'serious', 'critical']
+        priority = 'Medium'
+        for word in urgent_words:
+            if word.lower() in description.lower():
+                priority = 'High'
+                break
+
+        conn = get_db()
+        conn.execute(
+            """INSERT INTO complaints
+               (user_id, title, description, category, location, priority, status)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (session['user_id'], title, description,
+             category, location, priority, 'Pending')
+        )
+        conn.commit()
+        conn.close()
+
+        flash('Complaint submitted! Priority: ' + priority, 'success')
+        return redirect(url_for('my_complaints'))
+
+    return render_template('user/complaint.html')
+
+# -----------------------------------------------
+# My Complaints
+# -----------------------------------------------
+@app.route('/my-complaints')
+def my_complaints():
+    if 'user_id' not in session:
+        flash('Please login first!', 'danger')
+        return redirect(url_for('login'))
+
+    conn = get_db()
+    complaints = conn.execute(
+        "SELECT * FROM complaints WHERE user_id=? ORDER BY created DESC",
+        (session['user_id'],)
+    ).fetchall()
+    conn.close()
+
+    return render_template('user/my_complaints.html', complaints=complaints)
 
 # -----------------------------------------------
 # Logout
@@ -110,73 +212,7 @@ def logout():
     return redirect(url_for('login'))
 
 # -----------------------------------------------
-# Complaint Form page
-# -----------------------------------------------
-@app.route('/complaint', methods=['GET', 'POST'])
-def complaint():
-    # Check if user is logged in
-    if 'user_id' not in session:
-        flash('Please login first!', 'danger')
-        return redirect(url_for('login'))
-
-    if request.method == 'POST':
-        # Get data from form
-        title       = request.form['title']
-        description = request.form['description']
-        category    = request.form['category']
-        location    = request.form['location']
-
-        # Simple AI priority logic
-        # If description has urgent words = High priority
-        urgent_words = ['urgent', 'dangerous', 'accident', 'broken',
-                        'flood', 'fire', 'blocked', 'serious', 'critical']
-        priority = 'Low'
-        for word in urgent_words:
-            if word.lower() in description.lower():
-                priority = 'High'
-                break
-        else:
-            priority = 'Medium'
-
-        # Save complaint to database
-        cursor = mysql.connection.cursor()
-        cursor.execute(
-            """INSERT INTO complaints
-               (user_id, title, description, category, location, priority, status)
-               VALUES (%s, %s, %s, %s, %s, %s, %s)""",
-            (session['user_id'], title, description,
-             category, location, priority, 'Pending')
-        )
-        mysql.connection.commit()
-        cursor.close()
-
-        flash('Complaint submitted successfully! Priority: ' + priority, 'success')
-        return redirect(url_for('my_complaints'))
-
-    return render_template('user/complaint.html')
-
-
-# My Complaints page — shows user's complaints
-
-@app.route('/my-complaints')
-def my_complaints():
-    if 'user_id' not in session:
-        flash('Please login first!', 'danger')
-        return redirect(url_for('login'))
-
-    # Get all complaints of this user from database
-    cursor = mysql.connection.cursor()
-    cursor.execute(
-        "SELECT * FROM complaints WHERE user_id = %s ORDER BY created DESC",
-        (session['user_id'],)
-    )
-    complaints = cursor.fetchall()
-    cursor.close()
-
-    return render_template('user/my_complaints.html', complaints=complaints)
-
-# -----------------------------------------------
-# Admin Login page
+# Admin Login
 # -----------------------------------------------
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
@@ -184,18 +220,16 @@ def admin_login():
         username = request.form['username']
         password = request.form['password']
 
-        # Check admin in database
-        cursor = mysql.connection.cursor()
-        cursor.execute(
-            "SELECT * FROM admins WHERE username=%s AND password=%s",
+        conn = get_db()
+        admin = conn.execute(
+            "SELECT * FROM admins WHERE username=? AND password=?",
             (username, password)
-        )
-        admin = cursor.fetchone()
-        cursor.close()
+        ).fetchone()
+        conn.close()
 
         if admin:
-            session['admin_id']   = admin[0]
-            session['admin_name'] = admin[1]
+            session['admin_id']   = admin['id']
+            session['admin_name'] = admin['username']
             flash('Welcome Admin!', 'success')
             return redirect(url_for('admin_dashboard'))
         else:
@@ -204,43 +238,31 @@ def admin_login():
     return render_template('admin/admin_login.html')
 
 # -----------------------------------------------
-# Admin Dashboard — see all complaints
+# Admin Dashboard
 # -----------------------------------------------
 @app.route('/admin/dashboard')
 def admin_dashboard():
-    # Check if admin is logged in
     if 'admin_id' not in session:
         flash('Please login as admin!', 'danger')
         return redirect(url_for('admin_login'))
 
-    cursor = mysql.connection.cursor()
+    conn = get_db()
 
-    # Get all complaints with user name
-    cursor.execute("""
-        SELECT complaints.*, users.name
+    complaints = conn.execute("""
+        SELECT complaints.*, users.name as user_name
         FROM complaints
         JOIN users ON complaints.user_id = users.id
         ORDER BY complaints.created DESC
-    """)
-    all_complaints = cursor.fetchall()
+    """).fetchall()
 
-    # Count totals for summary cards
-    cursor.execute("SELECT COUNT(*) FROM complaints")
-    total = cursor.fetchone()[0]
-
-    cursor.execute("SELECT COUNT(*) FROM complaints WHERE status='Pending'")
-    pending = cursor.fetchone()[0]
-
-    cursor.execute("SELECT COUNT(*) FROM complaints WHERE status='In Progress'")
-    inprogress = cursor.fetchone()[0]
-
-    cursor.execute("SELECT COUNT(*) FROM complaints WHERE status='Resolved'")
-    resolved = cursor.fetchone()[0]
-
-    cursor.close()
+    total      = conn.execute("SELECT COUNT(*) FROM complaints").fetchone()[0]
+    pending    = conn.execute("SELECT COUNT(*) FROM complaints WHERE status='Pending'").fetchone()[0]
+    inprogress = conn.execute("SELECT COUNT(*) FROM complaints WHERE status='In Progress'").fetchone()[0]
+    resolved   = conn.execute("SELECT COUNT(*) FROM complaints WHERE status='Resolved'").fetchone()[0]
+    conn.close()
 
     return render_template('admin/admin_dashboard.html',
-                           complaints=all_complaints,
+                           complaints=complaints,
                            total=total,
                            pending=pending,
                            inprogress=inprogress,
@@ -255,16 +277,15 @@ def update_status(complaint_id):
         return redirect(url_for('admin_login'))
 
     new_status = request.form['status']
-
-    cursor = mysql.connection.cursor()
-    cursor.execute(
-        "UPDATE complaints SET status=%s WHERE id=%s",
+    conn = get_db()
+    conn.execute(
+        "UPDATE complaints SET status=? WHERE id=?",
         (new_status, complaint_id)
     )
-    mysql.connection.commit()
-    cursor.close()
+    conn.commit()
+    conn.close()
 
-    flash('Status updated successfully!', 'success')
+    flash('Status updated!', 'success')
     return redirect(url_for('admin_dashboard'))
 
 # -----------------------------------------------
@@ -274,9 +295,15 @@ def update_status(complaint_id):
 def admin_logout():
     session.pop('admin_id', None)
     session.pop('admin_name', None)
-    flash('Admin logged out!', 'success')
     return redirect(url_for('admin_login'))
 
+# -----------------------------------------------
 # Run the app
+# -----------------------------------------------
 if __name__ == '__main__':
+    init_db()
+    print("Database ready!")
     app.run(debug=True)
+
+# This runs on the server (Render/Railway)
+init_db()
