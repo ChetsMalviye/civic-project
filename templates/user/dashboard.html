@@ -58,12 +58,16 @@
 </head>
 <body>
 
-    <div class="navbar">
-        <div class="logo">🏛️ Civic Issue Reporting</div>
-        <div>
-            <a href="/logout">Logout</a>
-        </div>
+   <div class="navbar">
+    <div class="logo">🏛️ Civic Issue Reporting</div>
+    <div>
+        <a href="/">Home</a>
+        <a href="/complaint">Report Issue</a>
+        <a href="/my-complaints">My Complaints</a>
+        <a href="/admin/login">Admin Panel</a>
+        <a href="/logout">Logout</a>
     </div>
+</div>
 
     <div class="container">
         <h2>Welcome, {{ session['user_name'] }}! 👋</h2>
