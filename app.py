@@ -330,6 +330,30 @@ def profile():
                            total=total,
                            pending=pending,
                            resolved=resolved)
+    
+    # -----------------------------------------------
+# Delete Complaint
+# -----------------------------------------------
+@app.route('/delete-complaint/<int:complaint_id>')
+def delete_complaint(complaint_id):
+    if 'user_id' not in session:
+        flash('Please login first!', 'danger')
+        return redirect(url_for('login'))
+
+    conn   = get_db()
+    cursor = conn.cursor()
+
+    # Make sure user can only delete their OWN complaint
+    cursor.execute(
+        "DELETE FROM complaints WHERE id=%s AND user_id=%s",
+        (complaint_id, session['user_id'])
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    flash('Complaint deleted successfully!', 'success')
+    return redirect(url_for('my_complaints'))
 
 if __name__ == '__main__':
     app.run(debug=True)
