@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Profile | Civic System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f4f8;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: #1a73e8;
+            color: white;
+            padding: 14px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar .logo { font-size: 16px; font-weight: bold; }
+
+        .navbar a {
+            color: white; text-decoration: none;
+            font-size: 13px; margin-left: 20px; opacity: 0.9;
+        }
+
+        .navbar a:hover { opacity: 1; }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .page-title {
+            font-size: 22px;
+            color: #1a73e8;
+            margin-bottom: 6px;
+        }
+
+        .page-sub {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 24px;
+        }
+
+        /* Profile top card */
+        .profile-top {
+            background: white;
+            border-radius: 12px;
+            padding: 28px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 20px;
+        }
+
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #1a73e8;
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .profile-info h2 {
+            font-size: 20px;
+            color: #2c3e50;
+            margin-bottom: 4px;
+        }
+
+        .profile-info p {
+            font-size: 13px;
+            color: #888;
+        }
+
+        /* Stats row */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        }
+
+        .stat-card .num {
+            font-size: 30px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .stat-card .label {
+            font-size: 13px;
+            color: #888;
+        }
+
+        .stat-card.total .num  { color: #1a73e8; }
+        .stat-card.pending .num { color: #fb8c00; }
+        .stat-card.resolved .num { color: #43a047; }
+
+        /* Edit form */
+        .form-card {
+            background: white;
+            border-radius: 12px;
+            padding: 28px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        }
+
+        .form-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: bold;
+            color: #444;
+            margin-bottom: 6px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        .input-group input:focus { border-color: #1a73e8; }
+
+        .input-note {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 4px;
+        }
+
+        .btn {
+            padding: 11px 28px;
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn:hover { background: #1558c0; }
+
+        /* Flash messages */
+        .msg-success {
+            background: #d4edda; color: #155724;
+            padding: 10px 14px; border-radius: 8px;
+            margin-bottom: 16px; font-size: 13px;
+        }
+
+        .msg-danger {
+            background: #f8d7da; color: #721c24;
+            padding: 10px 14px; border-radius: 8px;
+            margin-bottom: 16px; font-size: 13px;
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <div class="navbar">
+        <div class="logo">🏛️ Civic Issue Reporting</div>
+        <div>
+            <a href="/">Home</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/complaint">Report Issue</a>
+            <a href="/my-complaints">My Complaints</a>
+            <a href="/logout">Logout</a>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <div class="page-title">👤 My Profile</div>
+        <div class="page-sub">View and update your account details</div>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="msg-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <!-- Profile Top -->
+        <div class="profile-top">
+            <div class="avatar">
+                {{ user['name'][0].upper() }}
+            </div>
+            <div class="profile-info">
+                <h2>{{ user['name'] }}</h2>
+                <p>📧 {{ user['email'] }}</p>
+                <p>📅 Member since: {{ user['created'] }}</p>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-card total">
+                <div class="num">{{ total }}</div>
+                <div class="label">Total Complaints</div>
+            </div>
+            <div class="stat-card pending">
+                <div class="num">{{ pending }}</div>
+                <div class="label">Pending</div>
+            </div>
+            <div class="stat-card resolved">
+                <div class="num">{{ resolved }}</div>
+                <div class="label">Resolved</div>
+            </div>
+        </div>
+
+        <!-- Edit Form -->
+        <div class="form-card">
+            <div class="form-title">Edit Profile Details</div>
+
+            <form method="POST">
+                <div class="two-col">
+                    <div class="input-group">
+                        <label>Full Name</label>
+                        <input type="text" name="name"
+                               value="{{ user['name'] }}" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Email Address</label>
+                        <input type="email" name="email"
+                               value="{{ user['email'] }}" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>New Password</label>
+                    <input type="password" name="new_password"
+                           placeholder="Leave empty to keep current password">
+                    <div class="input-note">
+                        Only fill this if you want to change your password
+                    </div>
+                </div>
+
+                <button type="submit" class="btn">
+                    Update Profile
+                </button>
+            </form>
+        </div>
+
+    </div>
+
+</body>
+</html>

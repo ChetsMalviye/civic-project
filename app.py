@@ -271,5 +271,65 @@ def admin_logout():
 # -----------------------------------------------
 # Run the app
 # -----------------------------------------------
+
+# -----------------------------------------------
+# User Profile Page
+# -----------------------------------------------
+@app.route('/profile', methods=['GET', 'POST'])
+def profile():
+    if 'user_id' not in session:
+        flash('Please login first!', 'danger')
+        return redirect(url_for('login'))
+
+    conn   = get_db()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    if request.method == 'POST':
+        name     = request.form['name']
+        email    = request.form['email']
+        new_pass = request.form['new_password']
+
+        if new_pass:
+            # Update name, email and password
+            hashed = generate_password_hash(new_pass)
+            cursor.execute(
+                "UPDATE users SET name=%s, email=%s, password=%s WHERE id=%s",
+                (name, email, hashed, session['user_id'])
+            )
+        else:
+            # Update only name and email
+            cursor.execute(
+                "UPDATE users SET name=%s, email=%s WHERE id=%s",
+                (name, email, session['user_id'])
+            )
+
+        conn.commit()
+        session['user_name'] = name
+        flash('Profile updated successfully!', 'success')
+        return redirect(url_for('profile'))
+
+    # Get user details
+    cursor.execute("SELECT * FROM users WHERE id=%s", (session['user_id'],))
+    user = cursor.fetchone()
+
+    # Get complaint counts
+    cursor.execute("SELECT COUNT(*) FROM complaints WHERE user_id=%s", (session['user_id'],))
+    total = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM complaints WHERE user_id=%s AND status='Pending'", (session['user_id'],))
+    pending = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM complaints WHERE user_id=%s AND status='Resolved'", (session['user_id'],))
+    resolved = cursor.fetchone()[0]
+
+    cursor.close()
+    conn.close()
+
+    return render_template('user/profile.html',
+                           user=user,
+                           total=total,
+                           pending=pending,
+                           resolved=resolved)
+
 if __name__ == '__main__':
     app.run(debug=True)
